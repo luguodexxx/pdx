@@ -1,0 +1,22 @@
+# # data config
+# STAR_INDEX: /mnt/data3/zhouran/hg19_mm10_star/
+# STAR_GENOME: /mnt/data3/zhouran/hg19_mm10/hg19_mm10.fa
+# HG19_BED: /mnt/data3/zhouran/hg19_mm10/hg19.bed
+# HG19_GENOME: /mnt/raid61/Microwell/hg19/refdata-cellranger-hg19-3.0.0/fasta/genome.fa
+# HG19_INDEX: /mnt/raid61/Microwell/hg19/refdata-cellranger-hg19-3.0.0/star_2.7/
+# data loc
+fq: /mnt/data6/zhouran/fq
+# fq: /mnt/data3/zhouran/RNAseqPipeline/fq
+BED:
+ hg19: /mnt/data3/zhouran/hg19_mm10/hg19.bed
+ mm10: /mnt/data3/zhouran/hg19_mm10/mm10.bed
+
+GENOME:
+ hg19: /mnt/raid61/Microwell/hg19/refdata-cellranger-hg19-3.0.0/fasta/genome.fa
+ mm10: /mnt/raid61/Microwell/mm10/fasta/genome.fa
+ hybird: /mnt/data3/zhouran/hg19_mm10/hg19_mm10.fa
+
+INDEX:
+ hg19: /mnt/raid61/Microwell/hg19/refdata-cellranger-hg19-3.0.0/star_2.7/
+ mm10: /mnt/raid61/Microwell/mm10/star_2.7/
+ hybird: /mnt/data3/zhouran/hg19_mm10_star/
