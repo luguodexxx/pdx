@@ -18,5 +18,9 @@ GENOME:
 
 INDEX:
  hg19: /mnt/raid61/Microwell/hg19/refdata-cellranger-hg19-3.0.0/star_2.7/
- mm10: /mnt/raid61/Microwell/mm10/star_2.7/
+ mm10: /mnt/raid61/Microwell/mm10/star_2.7.1/
  hybird: /mnt/data3/zhouran/hg19_mm10_star/
+
+RSEM:
+ hg19: /mnt/raid61/Personal_data/zhouran/reference/RSEM/hg19/hg19
+ mm10: /mnt/raid61/Personal_data/zhouran/reference/RSEM/mm10/mm10

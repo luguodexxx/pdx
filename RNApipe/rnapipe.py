@@ -2,21 +2,31 @@ import os
 import glob
 configfile: "config.allinone.yaml"
 
+# hINDEX = "/mnt/data3/zhouran/hg19_mm10_star/"
+# hGENOME = "/mnt/data3/zhouran/hg19_mm10/hg19_mm10.fa"
+# hg19bed = '/mnt/data3/zhouran/hg19_mm10/hg19.bed'
+# mINDEX = "/mnt/data3/zhouran/mm10/genome"
+# mGENOME = "/mnt/data3/zhouran/mm10/genome.fa"
+
 INTERVAL = '/mnt/data3/zhouran/hg38/hg38.exon_interval.bed'
 fqdir = config['fq']
 labels = []
 TMP = "--java-options \"-Djava.io.tmpdir=tmp\""
 
 
-SPECIES = ['hg19','mm10']
-
+# SPECIES = ['hg19','mm10']
+SPECIES = ['hg19']
 for i in glob.glob(f'{fqdir}/*'):
     labels.append(os.path.split(i)[1].split('.')[0])
-
+# labels = labels[0]
+# labels = labels[:4]
+# labels = ['WXF144_V2TC_T_EM_b2','WXF121_V2TC_T_EM_b1','WXF150_V2TC_T_EM_b1','T7_V2TC_T_1M_b1']
 rule all:
 	input:expand("data/{species}/{label}.star_{species}.sort.fixmate.paired.bam",label = labels,species=SPECIES),
+		expand("data/{species}/{label}.r2.fq.gz",label=labels,species=SPECIES),
 		expand("data/STAR/{label}.star_hybrid.bam",label=labels),
-		expand("data/final/{species}/{label}.bam",species=SPECIES,label=labels)
+		expand("data/final/{species}/{label}.bam",species=SPECIES,label=labels),
+		expand("data/rsem/{species}/{label}.transcript.bam",species=SPECIES,label=labels)
 
 rule star_align:
 	input:
@@ -159,7 +169,7 @@ rule indexbam:
 		err = "log/{species}/indexbam.{label}.err"
 	shell:
 		"""
-		samtools index -t 8 {input.bam} 2> {log.err} 1> {log.out}
+		samtools index {input.bam} 2> {log.err} 1> {log.out}
 		"""
 
 rule bam2fastq:
@@ -182,11 +192,14 @@ rule star_realign:
 		fq1 = "data/{species}/{label}.r1.fq.gz",
 		fq2 = "data/{species}/{label}.r2.fq.gz"
 	output:
-		bam = "data/final/{species}/{label}.bam"
+		bam = "data/final/{species}/{label}.bam",
+		isobam = "data/final/{species}/{label}.Aligned.toTranscriptome.out.bam"
 	log:
 		out = "log/final/{species}/star_realign.{label}.log",
 		err = "log/final/{species}/star_realign.{label}.err"
 	params:
+		# prefix = 'data/final/{species}/{label}.',
+		# hgindex = lambda wildcards: config["INDEX"][wildcards.species]
 		prefix = 'data/final/{species}/{label}.',
 		hgindex = lambda wildcards: config["INDEX"][wildcards.species]
 	shell:
@@ -195,12 +208,15 @@ rule star_realign:
 		--genomeDir {params.hgindex} \
 		--outFileNamePrefix {params.prefix} \
 		--readFilesIn {input.fq1} {input.fq2} \
+		--quantMode TranscriptomeSAM GeneCounts\
 		--readFilesCommand zcat \
 		--chimSegmentMin 18 \
 		--chimScoreMin 12 \
 		--runThreadN 6 \
 		--outFilterMultimapNmax 20 \
 		--outFilterMismatchNoverLmax 0.04 \
+		--outFilterScoreMinOverLread 0.33 \
+		--outFilterMatchNminOverLread 0.33 \
 		--outFilterIntronMotifs RemoveNoncanonicalUnannotated \
 		--alignIntronMax 200000 \
 		--outSAMstrandField intronMotif \
@@ -209,8 +225,31 @@ rule star_realign:
 		--outSJfilterCountUniqueMin 1 1 1 1 \
 		--outSJfilterCountTotalMin 1 1 1 1 \
 		--outStd SAM \
-		--genomeLoad LoadAndKeep \
 		--outSAMunmapped Within | samtools view - -b -S -o {output.bam} 2> {log.err} 1> {log.out}
 		"""
+		# --genomeLoad LoadAndKeep \
+
+rule rsem:
+	input:
+		isobam = "data/final/{species}/{label}.Aligned.toTranscriptome.out.bam"
+	output:
+		bam  = "data/rsem/{species}/{label}.transcript.bam"
+	params:
+		prefix = 'data/rsem/{species}/{label}',
+		rsemindex = lambda wildcards: config["RSEM"][wildcards.species]
+	log:
+		out = "log/rsem/{species}/rsem.{label}.log",
+		err = "log/rsem/{species}/rsem.{label}.err"
+
+	shell:
+		"""
+		rsem-calculate-expression --strandedness reverse \
+		--paired-end --alignments --calc-pme --calc-ci --sort-bam-by-coordinate \
+		-p 4 {input.isobam} \
+		{params.rsemindex} {params.prefix} 2> {log.err} 1> {log.out}
+		"""
+
+
+
 
 
